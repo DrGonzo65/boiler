@@ -1,9 +1,8 @@
 #!/bin/bash
-set -e
 
-VIM_PACKAGES=("tpope/vim-sensible" "altercation/vim-colors-solarized" "scrooloose/syntastic")
+VIM_PACKAGES=("tpope/vim-sensible" "altercation/vim-colors-solarized" "scrooloose/syntastic" "powerline/powerline")
 VIRTUALENV_NAME="venv"
-PIP_PACKAGES=("powerline-status")
+PIP_PACKAGES=("ipython")
 
 if ! type brew > /dev/null; then
   echo Installing Homebrew
@@ -11,8 +10,9 @@ if ! type brew > /dev/null; then
   ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 fi
 
-echo Installing zsh, wget, tmux, and htop
-brew install zsh wget tmux htop
+echo Installing python, zsh, wget, tmux, and htop
+brew install python zsh wget tmux htop
+brew install vim --with-python --with-ruby --with-perl
 
 if [ ! -d "/Users/$USER/.oh-my-zsh" ]; then
   echo Installing oh-my-zsh
@@ -29,14 +29,7 @@ if [ ! -d "/Users/$USER/.vim/autoload" ]; then
   done
 fi
 
-if [ ! -f "/Users/$USER/.vimrc" ]; then
-  echo Setting up vimrc
-  cat <<EOT >> /Users/$USER/.vimrc
-execute pathogen#infect()
-syntax on
-filetype plugin indent on
-EOT
-fi
+ln -s /Users/$USER/boiler/.vimrc /Users/$USER/.vimrc
 
 if ! type pip > /dev/null; then
   echo Installing Pip
@@ -48,19 +41,21 @@ if ! type virtualenv 2> /dev/null; then
   sudo pip install virtualenv
 fi
 
-if [ ! -d "/Users/$USER/$VIRTUALENV_NAME" ]; then
-  echo Building virtualenv $VIRTUALENV_NAME
-  cd ~/ && virtualenv $VIRTUALENV_NAME
+if ! type mkvirtualenv 2> /dev/null; then
+  echo Installing Virtualenvwrapper
+  sudo pip install virtualenvwrapper
 fi
 
-VE=`echo $VIRTUAL_ENV`
-if [ -z $VE ]; then
-  echo Activating Virtualenv $VIRTUALENV_NAME
-  source /Users/$USER/$VIRTUALENV_NAME/bin/activate
+export WORKON_HOME=$HOME/.virtualenvs
+source /usr/local/bin/virtualenvwrapper.sh
+
+if [ ! -d "/Users/$USER/.virtualenvs/$VIRTUALENV_NAME" ]; then
+  echo Building virtualenv $VIRTUALENV_NAME
+  mkvirtualenv $VIRTUALENV_NAME
+  workon $VIRTUALENV_NAME
 fi
 
 for i in "${PIP_PACKAGES[@]}"
 do
   pip install "$i"
 done
-
